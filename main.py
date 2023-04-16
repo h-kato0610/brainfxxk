@@ -1,42 +1,59 @@
 import sys
 
-def convert_to_ascii_code(n):
-    return chr(n)
-
-def syntax_match(input_argv):
-    memory_size = 2048
-    pointer = [0 for i in range(memory_size)]
-    current_pointer = 0
-    string_stack = []
-
-    for i, n in enumerate(input_argv):
-        match n:
-            case '>': # ポインタをインクリメント（右にずらす）
-                current_pointer += 1
-            case '<': # ポインタをデクリメント（左にずらす）
-                current_pointer -= 1
-            case '+': # ポインタの値をインクリメント
-                pointer[current_pointer] += 1
-            case '-': # ポインタの値をデクリメント
-                pointer[current_pointer] -= 1
-            case '.': # ポインタの値を出力
-                string_stack.append(convert_to_ascii_code(pointer[current_pointer]))
-            case ',': # 入力から1byte読み込んで、ポインタが指す値に代入
-                pass
-            case '[': # ポインタの指す値が0なら、後の]までジャンプ(要するにWhile) 
-                pass
-            case ']': # ポインタが指す値が0でないなら、対応する [ （の直後[注釈 1]）にジャンプする
-                pass
-            case _: # その他の入力が来た場合
-                pass
-
-    return string_stack
-
 def main():
-    # TODO 途中入力にも対応する
-    input_argv = sys.argv[1]
-    result = syntax_match(input_argv)
+    argv = sys.argv[1]
 
-    print(''.join(result))
+    memory_size = 30000
+    memory = [0 for i in range(memory_size)]
+    pointer = 0
+    head = 0
+
+    while head < len(argv):
+        if argv[head] == '+':
+            memory[pointer] += 1
+
+        elif argv[head] == '-':
+            memory[pointer] -= 1
+
+        elif argv[head] == '[':
+            if memory[pointer] == 0:
+                nest = 1
+                while nest != 0:
+                    head += 1
+                    if head == len(argv):
+                        print("']' is missing")
+                        sys.exit(1)
+                    if argv[head] == '[':
+                        nest += 1
+                    elif argv[head] == ']':
+                        nest -= 1
+        elif argv[head] == ']':
+            if memory[pointer] != 0:
+                nest = 1
+                while nest != 0:
+                    head -= 1
+                    if head < 0:
+                        print("'[' is missing")  
+                    if argv[head] == ']':
+                        nest += 1
+                    elif argv[head] == '[':
+                        nest -= 1
+        elif argv[head] == '.':
+            print(chr(memory[pointer]),end = "")
+        elif argv[head] == ',':
+            memory[pointer] = ord(sys.stdin.buffer.read(1))
+        elif argv[head] == '>':
+            pointer += 1       
+            if pointer > memory_size:
+                print("overflow!")
+                sys.exit(1)
+        elif argv[head] == "<":
+            if pointer == 0:
+                print("Can't decrement anymore")
+            pointer -= 1
+        else:
+            pass
+
+        head += 1  
 
 main() if __name__ == '__main__' else None
